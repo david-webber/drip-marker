@@ -1,13 +1,47 @@
-document.body.requestFullscreen();
+// document.body.requestFullscreen();
 
 var activeLines = new Array;
 
+const canvasContainer = document.querySelector('.canvasContainer');
+const selects = document.querySelectorAll('select');
 const canvas = document.querySelector('.canvas');
 const ctx = canvas.getContext("2d");
 const dripCanvas = document.querySelector('.drips');
 const dtx = dripCanvas.getContext("2d");
+let count = 0;
+let dripSpeed = 5;
+
+const options = {
+	penWidth: 10,
+	dripTolerance: 2
+}
 
 
+
+
+selects.forEach((el)=>{
+	el.addEventListener('change', updateOption)
+})
+function updateOption(e){
+	options[this.dataset.change] = this.value;
+}
+
+
+
+
+setInterval(function(){
+	if(activeLines.length > 0){
+		count++;
+	}else{
+		count = 0;
+	}
+
+if(count > options.dripTolerance){
+	count = 0;
+  drip();
+}
+
+},100)
 
 
 dripCanvas.addEventListener("touchstart", handleStart, false);
@@ -21,8 +55,8 @@ dripCanvas.addEventListener("touchmove", handleMove, false);
 
 
 
-let height = Math.min(window.innerHeight,window.innerWidth);
-let width = Math.max(window.innerWidth,window.innerHeight);
+let height = Math.min(canvasContainer.clientHeight,canvasContainer.clientWidth);
+let width = Math.max(canvasContainer.clientWidth,canvasContainer.clientHeight);
 resizeCanvas();
 
 
@@ -41,8 +75,9 @@ function handleStart(e) {
 	var {clientX:x,clientY:y} = e.changedTouches[0];
 	activeLines.push({x,y});
 
-	ctx.beginPath();
-	ctx.arc(x,y, 4, 0, 2 * Math.PI, false);  // a circle at the start
+	// ctx.beginPath();
+	ctx.moveTo(x,y);
+	ctx.arc(x,y, (options.penWidth/2), 0, 2 * Math.PI, false);  // a circle at the start
 	ctx.fillStyle = '#000000';
 	ctx.fill();
 
@@ -53,20 +88,22 @@ function handleStart(e) {
 
 
 	function handleMove(e) {
-
 		var {clientX:x,clientY:y} = e.changedTouches[0];
 		e.preventDefault();
 		var colour = '#000000';
-		ctx.beginPath();
+	  ctx.beginPath();
 		ctx.moveTo(activeLines[0].x, activeLines[0].y);
 		ctx.lineTo(x, y);
-		ctx.lineWidth = 8;
+		ctx.lineCap = "round";
+		ctx.lineWidth = options.penWidth;
 		ctx.strokeStyle = colour;
 		ctx.stroke();
 		activeLines.splice(0,1,{x,y});
 
-		const dripLength = Math.floor(Math.random() * (maxDrip - minDrip + 1) + minDrip);
-		startDrip(x,y,(y+dripLength),y);
+
+		if(count > options.dripTolerance){
+			drip();
+		}
 
 
 }
@@ -82,7 +119,6 @@ function handleEnd(e) {
 
 
 function resizeCanvas() {
-
 
 	canvas.height = height;
 	canvas.width = width;
@@ -101,21 +137,22 @@ function resizeCanvas() {
 
 
 
-
-
-
-
 // let isDrawing = false;
 // let count = 0;
 
 const minDrip = 1;
-const maxDrip = 400;
+const maxDrip = 200;
 
 
 let dripAnimationController;
 
 
+function drip(){
 
+	const {x,y} = activeLines[0];
+	const dripLength = Math.floor(Math.random() * (maxDrip - minDrip + 1) + minDrip);
+	startDrip(x,y,(y+dripLength),y);
+}
 
 
 
@@ -271,12 +308,12 @@ function drawDrip(x,start,end,current) {
 	// dtx.lineJoin = tip;
 	//dtx.beginPath();
 	dtx.linecap = "round"
-	lineWidth = 4;
+	dtx.lineWidth =  1;
 
 
 	dtx.moveTo(x,current);
 
-	current+=10;
+	current+=dripSpeed;
 
 //	dtx.moveTo(x, start);
 	dtx.lineTo(x, current);
@@ -297,6 +334,7 @@ function startDrip(x,start,end,current){
 
 
 function stopAnimation(){
+	// count = 0;
   cancelAnimationFrame(dripAnimationController);
 }
 

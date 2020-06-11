@@ -6,7 +6,15 @@ html,body{
 	padding:0;
 	margin:0 auto;
 }
-
+body{
+	display:grid;
+	grid-template-rows: 8fr 1fr;
+	height:100vh;
+}
+.canvasContainer{
+	position:relative;
+	overflow:hidden;
+}
 canvas{
 	position:absolute;
 	top:0;
